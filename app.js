@@ -1,7 +1,7 @@
 // ==========================
 // 設定
 // ==========================
-const serverUrl = "wss://YOUR-RENDER-URL.onrender.com"; // ← RenderのWS URLに置き換えてね
+const serverUrl = "wss://2323.onrender.com"; // ← RenderのWS URLに置き換えてね
 let ws;
 let name = "";
 let currentRoom = "general";
