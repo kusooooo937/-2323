@@ -13,7 +13,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (name) usernameInput.value = name;
 
   let ws;
-  const WS_URL =
+  const WS_URL = 'wss://2323.onrender.com';
     (location.protocol === "https:" ? "wss" : "ws") + "://" + location.host;
   const state = { typingTimeout: null };
   const history = loadLocalHistory();
