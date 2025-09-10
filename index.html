@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>シンプルチャット</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+    <header class="topbar">
+      <div class="title">シンプルチャット</div>
+      <div class="user-area">
+        <input id="username" placeholder="ユーザー名を入力（例: 太郎）" maxlength="20" />
+        <button id="setNameBtn">設定</button>
+      </div>
+    </header>
+
+    <main class="chat-container">
+      <ul id="messages" class="messages" aria-live="polite"></ul>
+    </main>
+
+    <div class="composer">
+      <div id="typingIndicator" class="typing" aria-hidden="true"></div>
+      <textarea id="messageInput" placeholder="メッセージを入力..." rows="1"></textarea>
+      <button id="sendBtn">送信</button>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
