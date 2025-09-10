@@ -1,69 +1,41 @@
 // ==========================
-// 必要モジュール
+// WebSocket + Express サーバー
 // ==========================
 const express = require("express");
-const { WebSocketServer } = require("ws");
 const path = require("path");
+const { WebSocketServer } = require("ws");
 
-// ==========================
-// Express HTTP サーバー
-// ==========================
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// フロントファイルを src から提供
-app.use(express.static(path.join(__dirname, "index.html")));
+// 静的ファイルを配信
+app.use(express.static(path.join(__dirname, "public")));
 
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "index.html"));
-});
-
-// ==========================
-// HTTP + WebSocket サーバー
-// ==========================
 const server = app.listen(PORT, () => {
-  console.log(`✅ Server running on port ${PORT}`);
+  console.log(`🚀 Server running on http://localhost:${PORT}`);
 });
 
+// ==========================
+// WebSocket
+// ==========================
 const wss = new WebSocketServer({ server });
 
-// ルーム管理 (roomName -> Set of ws clients)
-const rooms = new Map();
-
 wss.on("connection", (ws) => {
-  let currentRoom = null;
   console.log("🔌 Client connected");
 
   ws.on("message", (data) => {
-    let msg;
     try {
-      msg = JSON.parse(data);
-    } catch {
-      console.error("⚠️ Invalid JSON received");
-      return;
-    }
-
-    // ルーム参加
-    if (msg.type === "join") {
-      currentRoom = msg.payload.room;
-      if (!rooms.has(currentRoom)) rooms.set(currentRoom, new Set());
-      rooms.get(currentRoom).add(ws);
-      console.log(`${msg.payload.author} joined ${currentRoom}`);
-    }
-
-    // メッセージ送信
-    if (msg.type === "message" && currentRoom) {
-      const out = JSON.stringify({ type: "message", payload: msg.payload });
-      rooms.get(currentRoom).forEach(client => {
-        if (client.readyState === ws.OPEN) client.send(out);
+      const msg = JSON.parse(data.toString());
+      // 全クライアントにブロードキャスト
+      wss.clients.forEach((client) => {
+        if (client.readyState === ws.OPEN) {
+          client.send(JSON.stringify(msg));
+        }
       });
+    } catch (e) {
+      console.error("Invalid message:", e);
     }
   });
 
-  ws.on("close", () => {
-    if (currentRoom && rooms.has(currentRoom)) {
-      rooms.get(currentRoom).delete(ws);
-    }
-    console.log("❌ Client disconnected");
-  });
+  ws.on("close", () => console.log("❌ Client disconnected"));
 });
