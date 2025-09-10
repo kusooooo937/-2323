@@ -12,10 +12,10 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // フロントファイルを src から提供
-app.use(express.static(path.join(__dirname, "src")));
+app.use(express.static(path.join(__dirname, "index.html")));
 
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "src/index.html"));
+  res.sendFile(path.join(__dirname, "index.html"));
 });
 
 // ==========================
