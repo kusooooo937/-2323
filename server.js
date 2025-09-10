@@ -1,5 +1,4 @@
-
-  // ==========================
+// ==========================
 // 必要モジュール
 // ==========================
 const express = require("express");
@@ -12,19 +11,18 @@ const path = require("path");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// 静的ファイル提供
-app.use(express.static(path.join(__dirname, "/public")));
+// フロントファイルを src から提供
+app.use(express.static(path.join(__dirname, "src")));
 
-// ルートアクセス時に index.html を返す
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "/public/index.html"));
+  res.sendFile(path.join(__dirname, "src/index.html"));
 });
 
 // ==========================
-// WebSocket サーバー
+// HTTP + WebSocket サーバー
 // ==========================
 const server = app.listen(PORT, () => {
-  console.log(`✅ HTTP & WS Server running on port ${PORT}`);
+  console.log(`✅ Server running on port ${PORT}`);
 });
 
 const wss = new WebSocketServer({ server });
@@ -34,7 +32,6 @@ const rooms = new Map();
 
 wss.on("connection", (ws) => {
   let currentRoom = null;
-
   console.log("🔌 Client connected");
 
   ws.on("message", (data) => {
@@ -42,6 +39,7 @@ wss.on("connection", (ws) => {
     try {
       msg = JSON.parse(data);
     } catch {
+      console.error("⚠️ Invalid JSON received");
       return;
     }
 
