@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // WebSocket 設定
   let ws;
-  const WS_URL = (location.protocol === 'https:' ? 'wss' : 'ws') + '://' + location.host;
+  const WS_URL ='wss://2323.onrender.com';
   const state = { typingTimeout: null };
 
   const history = loadLocalHistory();
