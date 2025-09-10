@@ -9,12 +9,16 @@
 <body>
   <div id="app">
     <header class="topbar">
-      <div class="title">シンプルチャット</div>
-      <div class="user-area">
-        <input id="username" placeholder="ユーザー名を入力（例: 太郎）" maxlength="20" />
-        <button id="setNameBtn">設定</button>
-      </div>
-    </header>
+  <div class="title">シンプルチャット</div>
+  <div class="rooms">
+    <button class="room-btn active" data-room="general">General</button>
+    <button id="createRoomBtn">＋</button>
+  </div>
+  <div class="user-area">
+    <input id="username" placeholder="ユーザー名" maxlength="20" />
+    <button id="setNameBtn">設定</button>
+  </div>
+</header>
 
     <main class="chat-container">
       <ul id="messages" class="messages" aria-live="polite"></ul>
