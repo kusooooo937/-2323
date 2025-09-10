@@ -1,10 +1,13 @@
 // ==========================
 // 設定
 // ==========================
-const serverUrl = "wss://2323.onrender.com"; // ← RenderのWS URLに置き換えてね
+const serverUrl = "wss://YOUR-RENDER-URL.onrender.com"; // ← RenderのWS URLに置き換えてね
 let ws;
 let name = "";
 let currentRoom = "general";
+
+// 履歴保存用（roomName -> [messages]）
+const history = {};
 
 // ==========================
 // DOM 取得
@@ -48,8 +51,18 @@ connect();
 // ==========================
 function joinRoom(room) {
   if (room === currentRoom) return;
+
+  // 履歴保存
+  history[currentRoom] = messagesEl.innerHTML;
+
   currentRoom = room;
   messagesEl.innerHTML = "";
+
+  // 履歴があれば再表示
+  if (history[currentRoom]) {
+    messagesEl.innerHTML = history[currentRoom];
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
 
   // UI更新
   document.querySelectorAll(".room-btn").forEach(b => b.classList.remove("active"));
@@ -109,6 +122,10 @@ function addMessage(msg) {
   div.innerHTML = `<strong>${msg.author}</strong>: ${msg.text}`;
   messagesEl.appendChild(div);
   messagesEl.scrollTop = messagesEl.scrollHeight;
+
+  // 履歴に保存
+  if (!history[msg.room]) history[msg.room] = "";
+  history[msg.room] = messagesEl.innerHTML;
 }
 
 // ==========================
