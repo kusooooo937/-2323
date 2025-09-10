@@ -19,7 +19,8 @@
   // WebSocket 接続（ある場合）
   let ws;
   const WS_ENABLED = true; // 必要なら falseにしてローカルモードに
-  const WS_URL = (location.protocol === 'https:' ? 'wss' : 'ws') + '://' + location.host + '/ws';
+ const WS_URL = "wss://2323.onrender.com/ws";
+
 
   const state = {
     typingTimeout: null,
