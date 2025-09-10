@@ -1,23 +1,51 @@
-// server.js
-const express = require('express');
-const http = require('http');
-const WebSocket = require('ws');
-const path = require('path');
 
+  // ==========================
+// 必要モジュール
+// ==========================
+const express = require("express");
+const { WebSocketServer } = require("ws");
+const path = require("path");
+
+// ==========================
+// Express HTTP サーバー
+// ==========================
 const app = express();
-const server = http.createServer(app);
-const wss = new WebSocket.Server({ server, path: '/ws' });
+const PORT = process.env.PORT || 3000;
 
-// 静的ファイルを配布
-app.use(express.static(path.join(__dirname, 'public')));
+// 静的ファイル提供
+app.use(express.static(path.join(__dirname, "/public")));
+
+// ルートアクセス時に index.html を返す
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "/public/index.html"));
+});
+
+// ==========================
+// WebSocket サーバー
+// ==========================
+const server = app.listen(PORT, () => {
+  console.log(`✅ HTTP & WS Server running on port ${PORT}`);
+});
+
+const wss = new WebSocketServer({ server });
+
+// ルーム管理 (roomName -> Set of ws clients)
+const rooms = new Map();
 
 wss.on("connection", (ws) => {
   let currentRoom = null;
 
+  console.log("🔌 Client connected");
+
   ws.on("message", (data) => {
     let msg;
-    try { msg = JSON.parse(data); } catch { return; }
+    try {
+      msg = JSON.parse(data);
+    } catch {
+      return;
+    }
 
+    // ルーム参加
     if (msg.type === "join") {
       currentRoom = msg.payload.room;
       if (!rooms.has(currentRoom)) rooms.set(currentRoom, new Set());
@@ -25,10 +53,11 @@ wss.on("connection", (ws) => {
       console.log(`${msg.payload.author} joined ${currentRoom}`);
     }
 
-    else if (msg.type === "message" && currentRoom) {
+    // メッセージ送信
+    if (msg.type === "message" && currentRoom) {
       const out = JSON.stringify({ type: "message", payload: msg.payload });
       rooms.get(currentRoom).forEach(client => {
-        if (client.readyState === WebSocket.OPEN) client.send(out);
+        if (client.readyState === ws.OPEN) client.send(out);
       });
     }
   });
@@ -37,7 +66,6 @@ wss.on("connection", (ws) => {
     if (currentRoom && rooms.has(currentRoom)) {
       rooms.get(currentRoom).delete(ws);
     }
+    console.log("❌ Client disconnected");
   });
 });
-
-  
