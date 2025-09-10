@@ -1,161 +1,155 @@
-// ==========================
-// 設定
-// ==========================
-const serverUrl = "wss://2323.onrender.com"; // ← RenderのWS URLに置き換えてね
-let ws;
-let name = "";
-let currentRoom = "general";
+document.addEventListener('DOMContentLoaded', () => {
+  const messagesEl = document.getElementById('messages');
+  const input = document.getElementById('messageInput');
+  const sendBtn = document.getElementById('sendBtn');
+  const usernameInput = document.getElementById('username');
+  const setNameBtn = document.getElementById('setNameBtn');
+  const typingIndicator = document.getElementById('typingIndicator');
 
-// 履歴保存用（roomName -> [messages]）
-const history = {};
+  const STORAGE_KEY = 'simple_chat_history_v1';
+  const NAME_KEY = 'simple_chat_name_v1';
 
-// ==========================
-// DOM 取得
-// ==========================
-const messagesEl = document.getElementById("messages");
-const input = document.getElementById("messageInput"); // ← 修正！
-const sendBtn = document.getElementById("sendBtn");
+  let name = localStorage.getItem(NAME_KEY) || '';
+  if (name) usernameInput.value = name;
 
-// ==========================
-// WebSocket 接続
-// ==========================
-function connect() {
-  ws = new WebSocket(serverUrl);
+  // WebSocket 設定
+  let ws;
+  const WS_URL = (location.protocol === 'https:' ? 'wss' : 'ws') + '://' + location.host;
+  const state = { typingTimeout: null };
 
-  ws.addEventListener("open", () => {
-    console.log("✅ Connected to server");
-    joinRoom(currentRoom); // デフォルトルームに参加
-  });
+  const history = loadLocalHistory();
+  history.forEach(msg => addMessage({...msg, self: msg.author === name}));
 
-  ws.addEventListener("message", (event) => {
-    try {
-      const msg = JSON.parse(event.data);
-      if (msg.type === "message") {
-        addMessage(msg.payload);
-      }
-    } catch (e) {
-      console.error("Parse error:", e);
-    }
-  });
-
-  ws.addEventListener("close", () => {
-    console.log("❌ Disconnected. Reconnecting in 3s...");
-    setTimeout(connect, 3000);
-  });
-}
-
-connect();
-
-// ==========================
-// ルーム参加処理
-// ==========================
-function joinRoom(room) {
-  if (room === currentRoom) return;
-
-  // 履歴保存
-  history[currentRoom] = messagesEl.innerHTML;
-
-  currentRoom = room;
-  messagesEl.innerHTML = "";
-
-  // 履歴があれば再表示
-  if (history[currentRoom]) {
-    messagesEl.innerHTML = history[currentRoom];
+  // ==========================
+  // メッセージ表示・履歴
+  // ==========================
+  function addMessage({id, author, text, ts, self=false}) {
+    const li = document.createElement('li');
+    li.className = 'message ' + (self ? 'me' : 'other');
+    li.dataset.id = id || '';
+    const body = document.createElement('div');
+    body.className = 'body';
+    body.textContent = text;
+    const meta = document.createElement('div');
+    meta.className = 'meta';
+    const authorSpan = document.createElement('span');
+    authorSpan.textContent = author || '名無し';
+    authorSpan.style.fontWeight = '600';
+    const timeSpan = document.createElement('time');
+    timeSpan.textContent = new Date(ts).toLocaleTimeString();
+    meta.appendChild(authorSpan);
+    meta.appendChild(timeSpan);
+    li.appendChild(body);
+    li.appendChild(meta);
+    messagesEl.appendChild(li);
     messagesEl.scrollTop = messagesEl.scrollHeight;
   }
 
-  // UI更新
-  document.querySelectorAll(".room-btn").forEach(b => b.classList.remove("active"));
-  let existingBtn = document.querySelector(`.room-btn[data-room="${room}"]`);
-  if (!existingBtn) {
-    // 新しいルームボタンを追加
-    const newBtn = document.createElement("button");
-    newBtn.className = "room-btn active";
-    newBtn.dataset.room = room;
-    newBtn.textContent = room;
-    document.querySelector(".rooms").insertBefore(newBtn, document.getElementById("createRoomBtn"));
-    newBtn.addEventListener("click", () => joinRoom(room));
-  } else {
-    existingBtn.classList.add("active");
+  function saveLocalHistory(list) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+  }
+  function loadLocalHistory() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
   }
 
-  // サーバーに参加通知
-  if (ws && ws.readyState === WebSocket.OPEN) {
-    ws.send(JSON.stringify({
-      type: "join",
-      payload: { room: currentRoom, author: name || "名無し" }
-    }));
-  }
-}
+  // ==========================
+  // 送信処理
+  // ==========================
+  function sendMessage() {
+    const text = input.value.trim();
+    if (!text) return;
+    const msg = {
+      id: 'm' + Date.now() + Math.random().toString(36).slice(2,7),
+      author: name || '名無し',
+      text,
+      ts: Date.now()
+    };
+    addMessage({...msg, self:true});
+    history.push(msg);
+    saveLocalHistory(history);
 
-// ==========================
-// メッセージ送信
-// ==========================
-function sendMessage() {
-  const text = input.value.trim();
-  if (!text) return;
-  const msg = {
-    id: "m" + Date.now(),
-    author: name || "名無し",
-    text,
-    ts: Date.now(),
-    room: currentRoom
-  };
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({type:'message', payload:msg}));
+    }
 
-  // 自分の画面に追加
-  addMessage({ ...msg, self: true });
-
-  // サーバーに送信
-  if (ws && ws.readyState === WebSocket.OPEN) {
-    ws.send(JSON.stringify({ type: "message", payload: msg }));
+    input.value = '';
+    input.focus();
+    sendTyping(false);
   }
 
-  input.value = "";
-}
-
-// ==========================
-// メッセージ表示
-// ==========================
-function addMessage(msg) {
-  const div = document.createElement("div");
-  div.className = "msg" + (msg.self ? " self" : "");
-  div.innerHTML = `<strong>${msg.author}</strong>: ${msg.text}`;
-  messagesEl.appendChild(div);
-  messagesEl.scrollTop = messagesEl.scrollHeight;
-
-  // 履歴に保存
-  if (!history[msg.room]) history[msg.room] = "";
-  history[msg.room] = messagesEl.innerHTML;
-}
-
-// ==========================
-// イベント登録
-// ==========================
-sendBtn.addEventListener("click", sendMessage);
-input.addEventListener("keydown", (e) => {
-  if (e.key === "Enter" && !e.shiftKey) { // Shift+Enterなら改行
-    e.preventDefault();
-    sendMessage();
+  function sendTyping(isTyping){
+    if (!(ws && ws.readyState === WebSocket.OPEN)) return;
+    ws.send(JSON.stringify({type:'typing', payload:{typing:isTyping, author:name || '名無し'}}));
   }
-});
 
-document.getElementById("setNameBtn").addEventListener("click", () => {
-  const inputName = document.getElementById("username").value.trim();
-  if (inputName) {
-    name = inputName;
-    alert("ユーザー名を設定しました: " + name);
+  // ==========================
+  // イベント登録
+  // ==========================
+  sendBtn.addEventListener('click', sendMessage);
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    } else {
+      sendTyping(true);
+      if (state.typingTimeout) clearTimeout(state.typingTimeout);
+      state.typingTimeout = setTimeout(() => sendTyping(false), 900);
+    }
+  });
+
+  setNameBtn.addEventListener('click', () => {
+    name = usernameInput.value.trim() || '';
+    localStorage.setItem(NAME_KEY, name);
+    alert('ユーザー名を保存しました: ' + (name || '名無し'));
+  });
+
+  // 自動リサイズ
+  function autoResize() {
+    input.style.height = 'auto';
+    input.style.height = Math.min(120, input.scrollHeight) + 'px';
   }
-});
+  input.addEventListener('input', autoResize);
+  autoResize();
 
-// ルーム切替ボタン
-document.querySelectorAll(".room-btn").forEach(btn => {
-  btn.addEventListener("click", () => joinRoom(btn.dataset.room));
-});
+  // ==========================
+  // WebSocket 接続
+  // ==========================
+  function setupWebSocket() {
+    try { ws = new WebSocket(WS_URL); } 
+    catch(e){ console.warn('WebSocket unavailable', e); ws = null; return; }
 
-// 新しいルーム作成
-document.getElementById("createRoomBtn").addEventListener("click", () => {
-  const roomName = prompt("新しいルーム名を入力してください:");
-  if (roomName && roomName.trim()) {
-    joinRoom(roomName.trim());
+    ws.addEventListener('open', () => {
+      console.log('ws connected');
+      if (history.length) ws.send(JSON.stringify({type:'history_sync', payload:history}));
+    });
+
+    ws.addEventListener('message', (ev) => {
+      try {
+        const msg = JSON.parse(ev.data);
+        if (msg.type==='message'){
+          const payload = msg.payload;
+          if (!history.find(h=>h.id===payload.id)) {
+            history.push(payload);
+            saveLocalHistory(history);
+            addMessage({...payload, self: payload.author===name});
+          }
+        } else if (msg.type==='typing'){
+          const p = msg.payload;
+          if (p.author===name) return;
+          typingIndicator.textContent = p.typing ? `${p.author} が入力中…` : '';
+          typingIndicator.setAttribute('aria-hidden', !p.typing);
+        }
+      } catch(e){ console.error('invalid ws message', e); }
+    });
+
+    ws.addEventListener('close', ()=>{ console.log('ws closed'); setTimeout(setupWebSocket,1500); });
+    ws.addEventListener('error', e=>console.warn('ws error', e));
   }
+
+  setupWebSocket();
 });
