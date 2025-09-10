@@ -13,7 +13,7 @@ const history = {};
 // DOM 取得
 // ==========================
 const messagesEl = document.getElementById("messages");
-const input = document.getElementById("input");
+const input = document.getElementById("messageInput"); // ← 修正！
 const sendBtn = document.getElementById("sendBtn");
 
 // ==========================
@@ -133,7 +133,10 @@ function addMessage(msg) {
 // ==========================
 sendBtn.addEventListener("click", sendMessage);
 input.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") sendMessage();
+  if (e.key === "Enter" && !e.shiftKey) { // Shift+Enterなら改行
+    e.preventDefault();
+    sendMessage();
+  }
 });
 
 document.getElementById("setNameBtn").addEventListener("click", () => {
