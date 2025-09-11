@@ -1,28 +1,41 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>シンプルチャット</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <title>ルームチャット</title>
+  <style>
+    body { font-family: sans-serif; margin:0; padding:0; display:flex; height:100vh; }
+    .sidebar { width:180px; background:#eee; padding:10px; display:flex; flex-direction:column; }
+    .rooms { flex:1; overflow-y:auto; }
+    .room-btn { display:block; width:100%; margin:4px 0; padding:6px; border:none; cursor:pointer; text-align:left; }
+    .room-btn.active { background:#4caf50; color:white; }
+    #createRoomBtn { width:100%; padding:6px; border:none; background:#2196f3; color:white; cursor:pointer; }
+    .chat { flex:1; display:flex; flex-direction:column; }
+    #messages { flex:1; padding:10px; overflow-y:auto; background:#fafafa; }
+    .msg { margin:4px 0; padding:6px; border-radius:4px; }
+    .msg.self { background:#d1ffd1; text-align:right; }
+    .msg.other { background:#fff; }
+    #inputBar { display:flex; border-top:1px solid #ccc; }
+    #messageInput { flex:1; padding:6px; border:none; }
+    #sendBtn { padding:6px 12px; border:none; background:#4caf50; color:white; cursor:pointer; }
+  </style>
 </head>
 <body>
-  <div id="app">
-    <header class="topbar">
-      <div class="title">シンプルチャット</div>
-      <div class="user-area">
-        <input id="username" placeholder="ユーザー名" maxlength="20" />
-        <button id="setNameBtn">設定</button>
-      </div>
-    </header>
+  <div class="sidebar">
+    <h3>Rooms</h3>
+    <div class="rooms">
+      <button class="room-btn active" data-room="general">general</button>
+    </div>
+    <button id="createRoomBtn">＋ 部屋追加</button>
+    <hr>
+    <input id="username" placeholder="名前" />
+    <button id="setNameBtn">名前設定</button>
+  </div>
 
-    <main class="chat-container">
-      <ul id="messages" class="messages" aria-live="polite"></ul>
-    </main>
-
-    <div class="composer">
-      <div id="typingIndicator" class="typing" aria-hidden="true"></div>
-      <textarea id="messageInput" placeholder="メッセージを入力..." rows="1"></textarea>
+  <div class="chat">
+    <div id="messages"></div>
+    <div id="inputBar">
+      <input id="messageInput" placeholder="メッセージを入力..." />
       <button id="sendBtn">送信</button>
     </div>
   </div>
