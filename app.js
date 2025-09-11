@@ -11,7 +11,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentRoom = "general";
   let ws;
 
-  const WS_URL =
+  const WS_URL = wss://2323.onrender.com";
     (location.protocol === "https:" ? "wss" : "ws") + "://" + location.host;
 
   function connectWS() {
