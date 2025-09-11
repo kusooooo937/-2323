@@ -53,24 +53,26 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // =======================
-  // メッセージ送信
-  // =======================
-  function sendMessage() {
-    const text = input.value.trim();
-    if (!text) return;
-    const msg = {
-      id: "m" + Date.now(),
-      author: name,
-      text,
-      ts: Date.now(),
-      room: currentRoom,
-    };
-    addMessage({ ...msg, self: true });
-    if (ws && ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify({ type: "message", payload: msg }));
-    }
-    input.value = "";
+// メッセージ送信
+// =======================
+function sendMessage() {
+  const text = input.value.trim();
+  if (!text) return;
+  const msg = {
+    id: "m" + Date.now(),
+    author: name,
+    text,
+    ts: Date.now(),
+    room: currentRoom,
+  };
+
+  // ここでは表示しない！ サーバーから返ってきてから表示する
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify({ type: "message", payload: msg }));
   }
+
+  input.value = "";
+}
 
   // =======================
   // ルーム切り替え
